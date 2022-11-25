@@ -4,6 +4,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>cloud-alibaba-nacos</module>
+        <module>cloud-alibaba-circuitbreaker</module>
     </modules>
     <groupId>com.newland</groupId>
     <artifactId>springcloud-learn</artifactId>
