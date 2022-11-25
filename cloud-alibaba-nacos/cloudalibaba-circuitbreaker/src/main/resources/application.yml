@@ -1,0 +1,11 @@
+server:
+  port: 80
+spring:
+  application:
+    name: cloudalibaba-circuitbreaker
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:8848
+  config:
+    import: optional:nacos:sentinel-circuitbreaker-rules.yml

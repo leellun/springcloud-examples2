@@ -1,0 +1,20 @@
+server:
+  port: 3377
+spring:
+  application:
+    name: nacos-config-client
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848 #Nacos服务注册中心地址
+        group: DEFAULT_GROUP
+
+      config:
+        server-addr: localhost:8848 #Nacos服务注册中心地址
+        group: DEFAULT_GROUP
+  config:
+    # optional表示连接不成功继续启动
+    import:
+      - optional:nacos:test.yml
+      - optional:nacos:test01.yml?group=group_01
+      - nacos:test02.yml?group=group_02&refreshEnabled=false

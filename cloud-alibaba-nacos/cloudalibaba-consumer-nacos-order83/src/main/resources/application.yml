@@ -1,0 +1,23 @@
+server:
+  port: 83
+
+spring:
+  application:
+    name: nacos-order-consumer
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+feign:
+  circuitbreaker:
+    enabled: true
+  sentinel:
+    default-rule: default # Default rule name
+    rules:
+      # 默认规则
+      default:
+        - grade: 2 # 断路策略(0:平均RT, 1:异常率，2:异常次数)。
+          count: 1 # 阈值计数
+          timeWindow: 15 # 降级后时间为半开状态 尝试几个请求。
+          statIntervalMs: 1000
+          minRequestAmount: 1 # 可触发断路的最小请求数(在活动统计时间跨度内)
