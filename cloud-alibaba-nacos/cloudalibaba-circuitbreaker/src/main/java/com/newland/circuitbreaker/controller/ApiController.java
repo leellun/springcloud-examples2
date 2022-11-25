@@ -30,6 +30,11 @@ public class ApiController {
 
 	@GetMapping("/default/{ok}")
 	public String defaultConfig(@PathVariable boolean ok) {
+		try {
+			Thread.sleep(65*1000);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 		if (ok) {
 			return "ok";
 		}
