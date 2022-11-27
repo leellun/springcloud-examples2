@@ -1,0 +1,13 @@
+
+spring:
+  application:
+    name: uaa-server
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+  datasource:
+    url: jdbc:mysql://localhost:3308/oauth2?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: leellun
+    password: liulun666
+    driver-class-name: com.mysql.cj.jdbc.Driver
