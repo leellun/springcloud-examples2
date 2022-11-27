@@ -3,10 +3,6 @@ server:
 feign:
   circuitbreaker:
     enabled: true
-  httpclient:
-    connection-timeout: 700000
-    ok-http:
-      read-timeout: 70000
   client:
     config:
       default:
