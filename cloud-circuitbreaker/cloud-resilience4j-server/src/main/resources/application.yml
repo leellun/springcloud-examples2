@@ -1,0 +1,124 @@
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true # 开启健康检测 /actuator/health 开启详情的情况下可以查看
+        sliding-window-size: 10
+        sliding-window-type: TIME_BASED # 配置滑动窗口类型。 时间 或者次数
+        minimum-number-of-calls: 2 #配置最小调用次数。当连续错误次数大于它时才会打开circuitbreaker
+        permitted-number-of-calls-in-half-open-state: 3 # 当CircuitBreaker是半开状态时，配置被允许的调用次数。
+        automatic-transition-from-open-to-half-open-enabled: true # 如果为true，则CircuitBreaker会自动从打开状态转化为半开状态。不需要另外的调用来触发这种转换。
+        wait-duration-in-open-state: 10s # CircuitBreaker状态从打开转化为半开时，需要等待的时长。
+        failure-rate-threshold: 1 # 以百分率形式配置失败率阈值。失败率大于等于阈值时，CircuitBreaker转变为打开状态，并使调用短路。
+        event-consumer-buffer-size: 100 # 表示事件缓冲过区大小
+        record-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.util.concurrent.TimeoutException
+          - java.io.IOException
+        ignore-exceptions:
+          - com.newland.resilience4j.exception.BusinessException
+      shared:
+        sliding-window-size: 100
+        permitted-number-of-calls-in-half-open-state: 5
+        wait-duration-in-open-state: 1s
+        failure-rate-threshold: 50
+        event-consumer-buffer-size: 10
+        ignore-exceptions:
+          - com.newland.resilience4j.exception.BusinessException
+    instances:
+      backendA:
+        base-config: default
+      backendB:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 10
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 5s
+        failure-rate-threshold: 50
+        event-consumer-buffer-size: 10
+        record-failure-predicate: com.newland.resilience4j.exception.RecordFailurePredicate
+
+  retry:
+    configs:
+      default:
+        max-attempts: 3 # 最大重试次数值
+        wait-duration: 300 # 等待下次尝试的长值
+        retry-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.util.concurrent.TimeoutException
+          - java.io.IOException
+        ignore-exceptions:
+          - com.newland.resilience4j.exception.BusinessException
+    instances:
+      backendA:
+        base-config: default
+      backendB:
+        base-config: default
+
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 100
+    instances:
+      backendA:
+        max-concurrent-calls: 10
+      backendB:
+        max-wait-duration: 10ms #尝试进入饱和舱壁时，应阻塞线程的最长时间。
+        max-concurrent-calls: 20 # 舱壁允许的最大并行执行量
+
+  thread-pool-bulkhead:
+    configs:
+      default:
+        max-thread-pool-size: 4
+        core-thread-pool-size: 2
+        queue-capacity: 2 # 配置队列的容量
+    instances:
+      backendA:
+        base-config: default
+      backendB:
+        max-thread-pool-size: 1
+        core-thread-pool-size: 1
+        queue-capacity: 1
+
+  ratelimiter:
+    configs:
+      default:
+        register-health-indicator: false
+        limit-for-period: 10 #在一次刷新周期内，允许执行的最大请求数
+        limit-refresh-period: 1s #限流器每隔limitRefreshPeriod刷新一次，将允许处理的最大请求数量重置为limitForPeriod。
+        timeout-duration: 0 # 线程等待权限的默认等待时间
+        event-consumer-buffer-size: 100 #事件缓冲区大小
+    instances:
+      backendA:
+        base-config: default
+      backendB:
+        limit-for-period: 6
+        limit-refresh-period: 500ms
+        timeout-duration: 3s
+
+  timelimiter:
+    configs:
+      default:
+        cancel-running-future: false
+        timeout-duration: 2s
+    instances:
+      backendA:
+        base-config: default
+      backendB:
+        base-config: default
+management:
+  health:
+    ratelimiters:
+      enabled: false
+    circuitbreakers:
+      enabled: true
+  endpoint:
+    circuitbreakerevents:
+      enabled: true
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "*"

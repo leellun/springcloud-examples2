@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.newland.circuitbreaker.controller;
+package com.newland.resilience4j.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ApiController {
 
 	@GetMapping("/default/{ok}")
-	public String defaultConfig(@PathVariable("ok") boolean ok) {
+	public String defaultConfig(@PathVariable boolean ok) {
 		try {
 			Thread.sleep(65*1000);
 		} catch (InterruptedException e) {
@@ -42,12 +42,7 @@ public class ApiController {
 	}
 
 	@GetMapping("/feign/{ok}")
-	public String feignConfig(@PathVariable("ok") boolean ok) {
-		try {
-			Thread.sleep(65*1000);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
+	public String feignConfig(@PathVariable boolean ok) {
 		if (ok) {
 			return "ok";
 		}
@@ -55,7 +50,7 @@ public class ApiController {
 	}
 
 	@GetMapping("/feignMethod/{ok}")
-	public String feignMethodConfig(@PathVariable("ok") boolean ok) {
+	public String feignMethodConfig(@PathVariable boolean ok) {
 		if (ok) {
 			return "ok";
 		}

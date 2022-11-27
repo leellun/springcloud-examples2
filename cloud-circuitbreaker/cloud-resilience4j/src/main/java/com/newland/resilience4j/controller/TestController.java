@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package com.newland.circuitbreaker.controller;
+package com.newland.resilience4j.controller;
 
+import com.newland.resilience4j.feign.OrderClient;
+import com.newland.resilience4j.feign.UserClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,40 +29,26 @@ import org.springframework.web.bind.annotation.RestController;
  * @author freeman
  */
 @RestController
-public class ApiController {
+public class TestController {
 
-	@GetMapping("/default/{ok}")
-	public String defaultConfig(@PathVariable("ok") boolean ok) {
-		try {
-			Thread.sleep(65*1000);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-		if (ok) {
-			return "ok";
-		}
-		throw new RuntimeException("fail");
+	@Autowired
+	private UserClient userClient;
+	@Autowired
+	private OrderClient orderClient;
+
+	@GetMapping("/test/default/{ok}")
+	public String testDefault(@PathVariable boolean ok) {
+		return orderClient.defaultConfig(ok);
 	}
 
-	@GetMapping("/feign/{ok}")
-	public String feignConfig(@PathVariable("ok") boolean ok) {
-		try {
-			Thread.sleep(65*1000);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-		if (ok) {
-			return "ok";
-		}
-		throw new RuntimeException("fail");
+	@GetMapping("/test/feign/{ok}")
+	public String testFeign(@PathVariable boolean ok) {
+		return userClient.feign(ok);
 	}
 
-	@GetMapping("/feignMethod/{ok}")
-	public String feignMethodConfig(@PathVariable("ok") boolean ok) {
-		if (ok) {
-			return "ok";
-		}
-		throw new RuntimeException("fail");
+	@GetMapping("/test/feignMethod/{ok}")
+	public String testFeignMethod(@PathVariable boolean ok) {
+		return userClient.feignMethod(ok);
 	}
 
 }

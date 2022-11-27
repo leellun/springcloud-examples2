@@ -1,5 +1,5 @@
 server:
-  port: 80
+  port: 8080
 spring:
   application:
     name: cloudalibaba-circuitbreaker
@@ -16,6 +16,13 @@ feign:
     rules:
       # global feign client
       default:
+        - grade: 2
+          count: 1 # 次数
+          timeWindow: 1 #时间窗口
+          statIntervalMs: 1000 # 统计毫秒数
+          minRequestAmount: 1 # 可触发断路的最小请求数(在活动统计时间跨度内)。
+      # specific feign client
+      order:
         - grade: 2
           count: 1
           timeWindow: 1
@@ -35,3 +42,8 @@ feign:
           timeWindow: 1
           statIntervalMs: 1000
           minRequestAmount: 1
+  client:
+    config:
+      default:
+        connect-timeout: 0
+        read-timeout: 0

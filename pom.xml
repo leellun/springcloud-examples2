@@ -5,6 +5,7 @@
     <modules>
         <module>cloud-alibaba-nacos</module>
         <module>cloud-alibaba-circuitbreaker</module>
+        <module>cloud-circuitbreaker</module>
     </modules>
     <groupId>com.newland</groupId>
     <artifactId>springcloud-learn</artifactId>
