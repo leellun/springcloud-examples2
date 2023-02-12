@@ -15,6 +15,9 @@
  */
 package com.newland.uua.config;
 
+import com.mysql.cj.jdbc.MysqlDataSource;
+import com.mysql.cj.jdbc.MysqlDataSourceFactory;
+import com.mysql.cj.jdbc.MysqlXADataSource;
 import com.newland.uua.utils.Jwks;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -96,7 +99,7 @@ public class AuthorizationServerConfig {
 
 		// Save registered client in db as if in-memory
 		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-		registeredClientRepository.save(registeredClient);
+//		registeredClientRepository.save(registeredClient);
 
 		return registeredClientRepository;
 	}
@@ -129,18 +132,18 @@ public class AuthorizationServerConfig {
 		return AuthorizationServerSettings.builder().build();
 	}
 
-	@Bean
-	public EmbeddedDatabase embeddedDatabase() {
-		// @formatter:off
-		return new EmbeddedDatabaseBuilder()
-				.generateUniqueName(true)
-				.setType(EmbeddedDatabaseType.H2)
-				.setScriptEncoding("UTF-8")
-				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
-				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
-				.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
-				.build();
-		// @formatter:on
-	}
+//	@Bean
+//	public EmbeddedDatabase embeddedDatabase() {
+//		// @formatter:off
+//		return new EmbeddedDatabaseBuilder()
+//				.generateUniqueName(true)
+//				.setType(EmbeddedDatabaseType.valueOf("mysql"))
+//				.setScriptEncoding("UTF-8")
+//				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
+//				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
+//				.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
+//				.build();
+//		// @formatter:on
+//	}
 
 }
