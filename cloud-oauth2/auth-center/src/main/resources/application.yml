@@ -1,0 +1,29 @@
+
+spring:
+  application:
+    name: uaa-server
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.100.100:32065
+  datasource:
+    url: jdbc:mysql://192.168.100.100:30325/auth-center?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: lanheerp
+    driver-class-name: com.mysql.cj.jdbc.Driver
+#client:
+#  registers:
+#    - client-id: mobile-gateway-client
+#      client-secret: "123456"
+#      authentication-method: client_secret_basic
+#      grant-types:
+#        - authorization_code
+#        - refresh_token
+#        - client_credentials
+#      scopes:
+#        - openid
+#        - message.read
+#        - message.write
+#      redirect-uris:
+#        - http://127.0.0.1:9100/login/oauth2/code/mobile-gateway-client-oidc
+#        - http://127.0.0.1:9100/authorized
