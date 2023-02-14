@@ -16,7 +16,7 @@ import java.util.ArrayList;
  * Author: leell
  * Date: 2022/10/17 20:47:51
  */
-@Component
+//@Component
 public class IntegrationUserDetailsAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
 
     @Override

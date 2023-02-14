@@ -20,7 +20,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -34,7 +33,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
@@ -51,6 +50,13 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -93,7 +99,7 @@ public class AuthorizationServerConfig {
                         .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
                         //是否可重用刷新令牌
                         .reuseRefreshTokens(true)
-                                .accessTokenFormat(OAuth2TokenFormat.REFERENCE)
+//                                .accessTokenFormat(OAuth2TokenFormat.REFERENCE)
                         //accessToken 的有效期  单位：秒
                         .accessTokenTimeToLive(Duration.of(111111111, ChronoUnit.SECONDS))
                         //refreshToken 的有效期   单位：秒
@@ -109,7 +115,7 @@ public class AuthorizationServerConfig {
                 .build();
 
         JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-		registeredClientRepository.save(registeredClient);
+//		registeredClientRepository.save(registeredClient);
 
         return registeredClientRepository;
     }
@@ -136,7 +142,23 @@ public class AuthorizationServerConfig {
     public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
     }
+    @Bean
+    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource){
+        return new NimbusJwtEncoder(jwkSource);
+    }
+    public static void main(String[] args) {
+        AuthorizationServerConfig config=new AuthorizationServerConfig();
 
+
+        JWKSource<SecurityContext> jwkSource= config.jwkSource();
+
+        JwtDecoder decoder=OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+        JwtEncoder encoder= new NimbusJwtEncoder(jwkSource);
+        Jwt jwt = encoder.encode(JwtEncoderParameters.from(JwtClaimsSet.builder().claim("aa","bb").build()));
+        System.out.println(jwt.getTokenValue());
+        Jwt decoderJwt =  decoder.decode("eyJraWQiOiI4ZWQ3OGFlOS05MGEwLTRjY2MtYTE4ZC0xMjExMDUxM2MwODUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJtZXNzYWdpbmctY2xpZW50IiwiYXVkIjoibWVzc2FnaW5nLWNsaWVudCIsIm5iZiI6MTY3NjM1OTM1OCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwiZXhwIjoxNzg3NDcwNDY5LCJpYXQiOjE2NzYzNTkzNTh9.juODO-DiTEF_5EFrIafres1-pWOr3IHxnbKO-G5E_8rDV0Et2dLf5b-iNs9MIo0B3eItbdItQ4-DieHYoIJffyFHQHKCGDoTMAyF2FFH32jUeaWFwEbJxTrYavy-ZxDK4noYK4Ui2-g6wDipXaA4H1OXEtd0CxtiXZeanUC4Mkd8TzFNexKgkMUCd9OGzv3_nZiVgG424-3Qqb-4HmgwLU1WMN_PBRegXvqXNf6VPvySnBAcMCKq3tSk6sdYR_3Sy3Iwxgk1IUnLFVDl7ZGFCZlYvfx4zUbLMS8ut-t7sd6unG-IdJkmlLkYN11Z02XKkvvwcVPR-lA8x8pKdnS-jg");
+        System.out.println(decoderJwt);
+    }
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().build();

@@ -15,6 +15,13 @@
  */
 package com.newland.auth.config;
 
+import com.newland.auth.config.core.AuthOAuth2AccessTokenGenerator;
+import com.newland.auth.config.core.AuthOAuth2TokenCustomizer;
+import com.newland.auth.utils.Jwks;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +29,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -33,22 +49,42 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
 public class DefaultSecurityConfig {
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
-    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
-                .formLogin(withDefaults());
-        return http.build();
+    public JWKSource<SecurityContext> jwkSource() {
+        RSAKey rsaKey = Jwks.generateRsa();
+        JWKSet jwkSet = new JWKSet(rsaKey);
+        return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    }
+
+    @Bean
+    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+        return new NimbusJwtEncoder(jwkSource);
     }
 
     @Bean
     UserDetailsService users() {
         UserDetails user = User.withDefaultPasswordEncoder()
-                .username("user1")
-                .password("password")
+                .username("user")
+                .password("123456")
                 .roles("USER")
                 .build();
         return new InMemoryUserDetailsManager(user);
     }
-
+    @Bean
+    public OAuth2TokenGenerator createAuth2TokenGenerator(JwtEncoder jwtEncoder) {
+        AuthOAuth2AccessTokenGenerator authOAuth2AccessTokenGenerator = new AuthOAuth2AccessTokenGenerator(jwtEncoder);
+        // 注入Token 增加关联用户信息
+        authOAuth2AccessTokenGenerator.setAccessTokenCustomizer(new AuthOAuth2TokenCustomizer());
+        return new DelegatingOAuth2TokenGenerator(authOAuth2AccessTokenGenerator, new OAuth2RefreshTokenGenerator());
+    }
 }

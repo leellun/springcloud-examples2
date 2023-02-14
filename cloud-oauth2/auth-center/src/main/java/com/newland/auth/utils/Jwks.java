@@ -15,58 +15,37 @@
  */
 package com.newland.auth.utils;
 
-import com.nimbusds.jose.jwk.Curve;
-import com.nimbusds.jose.jwk.ECKey;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.jwk.RSAKey;
 
-import javax.crypto.SecretKey;
 import java.security.KeyPair;
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.ECPublicKey;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.UUID;
 
 /**
  * @author leellun
  */
 public final class Jwks {
 
-	private Jwks() {
-	}
+    private Jwks() {
+    }
 
-	public static RSAKey generateRsa() {
-		KeyPair keyPair = KeyGeneratorUtils.generateRsaKey();
-		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-		// @formatter:off
-		return new RSAKey.Builder(publicKey)
-				.privateKey(privateKey)
-				.keyID(UUID.randomUUID().toString())
-				.build();
-		// @formatter:on
-	}
-
-	public static ECKey generateEc() {
-		KeyPair keyPair = KeyGeneratorUtils.generateEcKey();
-		ECPublicKey publicKey = (ECPublicKey) keyPair.getPublic();
-		ECPrivateKey privateKey = (ECPrivateKey) keyPair.getPrivate();
-		Curve curve = Curve.forECParameterSpec(publicKey.getParams());
-		// @formatter:off
-		return new ECKey.Builder(curve, publicKey)
-				.privateKey(privateKey)
-				.keyID(UUID.randomUUID().toString())
-				.build();
-		// @formatter:on
-	}
-
-	public static OctetSequenceKey generateSecret() {
-		SecretKey secretKey = KeyGeneratorUtils.generateSecretKey();
-		// @formatter:off
-		return new OctetSequenceKey.Builder(secretKey)
-				.keyID(UUID.randomUUID().toString())
-				.build();
-		// @formatter:on
-	}
+    public static RSAKey generateRsa() {
+        try {
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(ClassLoader.getSystemResourceAsStream("oauth2.jks"), "123456".toCharArray());
+            Certificate certificate = keyStore.getCertificate("oauth2");
+            KeyPair keyPair = new KeyPair(certificate.getPublicKey(), (PrivateKey) keyStore.getKey("oauth2", "123456".toCharArray()));
+            RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+            RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+            return new RSAKey.Builder(publicKey)
+                    .privateKey(privateKey)
+                    .keyID("8ed78ae9-90a0-4ccc-a18d-12110513c085")
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

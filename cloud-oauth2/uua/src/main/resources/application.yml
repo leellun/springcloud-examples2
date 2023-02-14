@@ -27,3 +27,5 @@ spring:
 #      redirect-uris:
 #        - http://127.0.0.1:9100/login/oauth2/code/mobile-gateway-client-oidc
 #        - http://127.0.0.1:9100/authorized
+server:
+  port: 8081

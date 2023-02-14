@@ -29,8 +29,7 @@ public class CustomeOAuth2AccessTokenGenerator implements OAuth2TokenGenerator<O
 	@Nullable
 	@Override
 	public OAuth2AccessToken generate(OAuth2TokenContext context) {
-		if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) || !OAuth2TokenFormat.REFERENCE
-				.equals(context.getRegisteredClient().getTokenSettings().getAccessTokenFormat())) {
+		if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 			return null;
 		}
 
@@ -82,8 +81,9 @@ public class CustomeOAuth2AccessTokenGenerator implements OAuth2TokenGenerator<O
 		}
 
 		OAuth2TokenClaimsSet accessTokenClaimsSet = claimsBuilder.build();
+
 		return new OAuth2AccessTokenClaims(OAuth2AccessToken.TokenType.BEARER,
-				UUID.randomUUID().toString(), accessTokenClaimsSet.getIssuedAt(), accessTokenClaimsSet.getExpiresAt(),
+				"2q34234234234", accessTokenClaimsSet.getIssuedAt(), accessTokenClaimsSet.getExpiresAt(),
 				context.getAuthorizedScopes(), accessTokenClaimsSet.getClaims());
 	}
 
