@@ -60,11 +60,8 @@ public final class JwtAuthenticationProvider implements AuthenticationProvider {
         String password = resourceOwnerPasswordAuthentication.getPassword();
 
         Authentication usernamePasswordAuthentication = null;
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = null;
         try {
-            usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-            usernamePasswordAuthentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
-
+            usernamePasswordAuthentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             logger.debug("[Herodotus] |- Resource Owner Password username and password authenticate success ");
         } catch (AccountStatusException | BadCredentialsException ase) {
             ase.printStackTrace();

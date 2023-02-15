@@ -43,6 +43,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 /**
+ * 默认配置
  * @author leell
  */
 @EnableWebSecurity
@@ -77,7 +78,7 @@ public class DefaultSecurityConfig {
         System.out.println(jwt);
     }
 
-    @Bean
+//    @Bean
     UserDetailsService users() {
         UserDetails user = User.withDefaultPasswordEncoder()
                 .username("user")

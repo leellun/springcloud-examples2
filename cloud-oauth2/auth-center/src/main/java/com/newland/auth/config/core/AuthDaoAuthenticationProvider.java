@@ -26,7 +26,7 @@ import java.util.ArrayList;
  *
  * @author leellun
  */
-@Component
+//@Component
 public class AuthDaoAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
 
     @Autowired

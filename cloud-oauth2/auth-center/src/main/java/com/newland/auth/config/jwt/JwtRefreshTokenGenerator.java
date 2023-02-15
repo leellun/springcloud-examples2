@@ -1,7 +1,10 @@
 package com.newland.auth.config.jwt;
 
+import com.newland.auth.common.AuthConstant;
 import com.newland.auth.common.GrantType;
 import com.newland.auth.common.TokenType;
+import com.newland.auth.model.AuthUser;
+import com.newland.auth.model.LoginUser;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
@@ -52,9 +55,11 @@ public class JwtRefreshTokenGenerator implements OAuth2TokenGenerator<OAuth2Refr
         if (StringUtils.hasText(issuer)) {
             claimsBuilder.issuer(issuer);
         }
+        AuthUser authUser = (AuthUser) context.getPrincipal().getPrincipal();
+        LoginUser loginUser = authUser.getLoginUser();
         claimsBuilder
                 .subject(context.getPrincipal().getName())
-                .claim("principal",context.getPrincipal())
+                .claim(AuthConstant.PRINCIPAL,loginUser)
                 .audience(Collections.singletonList(registeredClient.getClientId()))
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)

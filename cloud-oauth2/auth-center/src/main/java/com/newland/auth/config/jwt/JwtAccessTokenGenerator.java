@@ -1,7 +1,9 @@
 package com.newland.auth.config.jwt;
 
-import com.newland.auth.common.GrantType;
+import com.newland.auth.common.AuthConstant;
 import com.newland.auth.common.TokenType;
+import com.newland.auth.model.AuthUser;
+import com.newland.auth.model.LoginUser;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.ClaimAccessor;
@@ -11,7 +13,8 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.token.*;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -39,21 +42,19 @@ public class JwtAccessTokenGenerator implements OAuth2TokenGenerator<OAuth2Acces
         if (!TokenType.JWT.getValue().equals(context.getTokenType().getValue())) {
             return null;
         }
-        String issuer = null;
-        if (context.getAuthorizationServerContext() != null) {
-            issuer = context.getAuthorizationServerContext().getIssuer();
-        }
         RegisteredClient registeredClient = context.getRegisteredClient();
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
 
         JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder();
-        if (StringUtils.hasText(issuer)) {
-            claimsBuilder.issuer(issuer);
+        if (context.getAuthorizationServerContext() != null && StringUtils.hasText(context.getAuthorizationServerContext().getIssuer())) {
+            claimsBuilder.issuer(context.getAuthorizationServerContext().getIssuer());
         }
+        AuthUser authUser = (AuthUser) context.getPrincipal().getPrincipal();
+        LoginUser loginUser = authUser.getLoginUser();
         claimsBuilder
                 .subject(context.getPrincipal().getName())
-                .claim("principal",context.getPrincipal())
+                .claim(AuthConstant.PRINCIPAL, loginUser)
                 .audience(Collections.singletonList(registeredClient.getClientId()))
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
@@ -62,7 +63,7 @@ public class JwtAccessTokenGenerator implements OAuth2TokenGenerator<OAuth2Acces
         if (!CollectionUtils.isEmpty(context.getAuthorizedScopes())) {
             claimsBuilder.claim(OAuth2ParameterNames.SCOPE, context.getAuthorizedScopes());
         }
-
+        this.jwtEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build()));
         JwtClaimsSet jwtClaimsSet = claimsBuilder.build();
         return new OAuth2AccessTokenClaims(OAuth2AccessToken.TokenType.BEARER,
                 this.jwtEncoder.encode(JwtEncoderParameters.from(jwtClaimsSet)).getTokenValue(), jwtClaimsSet.getIssuedAt(), jwtClaimsSet.getExpiresAt(),
@@ -70,7 +71,6 @@ public class JwtAccessTokenGenerator implements OAuth2TokenGenerator<OAuth2Acces
     }
 
     private static final class OAuth2AccessTokenClaims extends OAuth2AccessToken implements ClaimAccessor {
-
         private final Map<String, Object> claims;
 
         private OAuth2AccessTokenClaims(TokenType tokenType, String tokenValue, Instant issuedAt, Instant expiresAt,

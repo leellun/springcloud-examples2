@@ -26,7 +26,6 @@ public final class JwtAuthenticationConverter implements AuthenticationConverter
             return null;
         }
         MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
-
         String scope = OAuth2EndpointUtils.checkOptionalParameter(parameters,OAuth2ParameterNames.SCOPE);
 
         Set<String> requestedScopes = null;
