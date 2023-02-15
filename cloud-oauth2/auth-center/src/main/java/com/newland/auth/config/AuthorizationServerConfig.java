@@ -16,13 +16,14 @@
 package com.newland.auth.config;
 
 import com.newland.auth.config.core.AuthDaoAuthenticationProvider;
-import com.newland.auth.config.core.AuthOAuth2AccessTokenGenerator;
-import com.newland.auth.config.core.AuthOAuth2TokenCustomizer;
 import com.newland.auth.config.core.FormIdentityLoginConfigurer;
 import com.newland.auth.config.handler.AuthAuthenticationFailureHandler;
 import com.newland.auth.config.handler.AuthAuthenticationSuccessHandler;
+import com.newland.auth.config.jwt.JwtAuthenticationConverter;
+import com.newland.auth.config.jwt.JwtAuthenticationProvider;
 import com.newland.auth.config.password.OAuth2PasswordAuthenticationConverter;
 import com.newland.auth.config.password.OAuth2PasswordAuthenticationProvider;
+import com.newland.auth.utils.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +32,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
@@ -39,8 +39,6 @@ import org.springframework.security.oauth2.server.authorization.client.JdbcRegis
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.authentication.*;
 import org.springframework.security.web.DefaultSecurityFilterChain;
@@ -58,7 +56,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
     @Autowired
-    private AuthDaoAuthenticationProvider pigDaoAuthenticationProvider;
+    private AuthDaoAuthenticationProvider authDaoAuthenticationProvider;
 
     @Bean
     public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
@@ -104,7 +102,7 @@ public class AuthorizationServerConfig {
                 .and().apply(new FormIdentityLoginConfigurer()).and().build();
 
         // 注入自定义授权模式实现
-        addCustomOAuth2GrantAuthenticationProvider(http);
+        addCustomOAuth2GrantAuthenticationProvider(http,authorizationService);
         return securityFilterChain;
     }
 
@@ -123,6 +121,7 @@ public class AuthorizationServerConfig {
     private AuthenticationConverter accessTokenRequestConverter() {
         return new DelegatingAuthenticationConverter(Arrays.asList(
                 new OAuth2PasswordAuthenticationConverter(),
+                new JwtAuthenticationConverter(),
                 new OAuth2RefreshTokenAuthenticationConverter(),
                 new OAuth2ClientCredentialsAuthenticationConverter(),
                 new OAuth2AuthorizationCodeAuthenticationConverter(),
@@ -131,7 +130,8 @@ public class AuthorizationServerConfig {
 
     @Autowired
     private OAuth2TokenGenerator oAuth2TokenGenerator;
-
+    @Autowired
+    private RedisUtil redisUtil;
     /**
      * 注入授权模式实现提供方
      * <p>
@@ -139,17 +139,16 @@ public class AuthorizationServerConfig {
      * 2. 短信登录 </br>
      */
     @SuppressWarnings("unchecked")
-    private void addCustomOAuth2GrantAuthenticationProvider(HttpSecurity http) {
+    private void addCustomOAuth2GrantAuthenticationProvider(HttpSecurity http, OAuth2AuthorizationService authorizationService) {
         AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);
-        OAuth2AuthorizationService authorizationService = http.getSharedObject(OAuth2AuthorizationService.class);
+        OAuth2PasswordAuthenticationProvider oAuth2PasswordAuthenticationProvider=new OAuth2PasswordAuthenticationProvider(authenticationManager,authorizationService,oAuth2TokenGenerator);
+        JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(
+                authenticationManager, oAuth2TokenGenerator);
 
-        OAuth2PasswordAuthenticationProvider resourceOwnerPasswordAuthenticationProvider = new OAuth2PasswordAuthenticationProvider(
-                authenticationManager, authorizationService, oAuth2TokenGenerator);
-
-        // 处理 UsernamePasswordAuthenticationToken
-        http.authenticationProvider(pigDaoAuthenticationProvider);
-        // 处理 OAuth2ResourceOwnerPasswordAuthenticationToken
-        http.authenticationProvider(resourceOwnerPasswordAuthenticationProvider);
-        // 处理 OAuth2ResourceOwnerSmsAuthenticationToken
+        http.authenticationProvider(authDaoAuthenticationProvider);
+        // 处理 用户密码 token方式登录
+        http.authenticationProvider(oAuth2PasswordAuthenticationProvider);
+        // 处理 jwt
+        http.authenticationProvider(jwtAuthenticationProvider);
     }
 }

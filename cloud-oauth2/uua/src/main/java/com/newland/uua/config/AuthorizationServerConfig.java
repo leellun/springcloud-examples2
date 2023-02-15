@@ -91,6 +91,9 @@ public class AuthorizationServerConfig {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+                .authorizationGrantType(new AuthorizationGrantType("jwt"))
+                .authorizationGrantType(new AuthorizationGrantType("jwt_refresh_token"))
+                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
                 .authorizationGrantType(AuthorizationGrantType.JWT_BEARER)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
@@ -115,7 +118,7 @@ public class AuthorizationServerConfig {
                 .build();
 
         JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-//		registeredClientRepository.save(registeredClient);
+		registeredClientRepository.save(registeredClient);
 
         return registeredClientRepository;
     }
@@ -142,23 +145,26 @@ public class AuthorizationServerConfig {
     public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
     }
+
     @Bean
-    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource){
+    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
         return new NimbusJwtEncoder(jwkSource);
     }
+
     public static void main(String[] args) {
-        AuthorizationServerConfig config=new AuthorizationServerConfig();
+        AuthorizationServerConfig config = new AuthorizationServerConfig();
 
 
-        JWKSource<SecurityContext> jwkSource= config.jwkSource();
+        JWKSource<SecurityContext> jwkSource = config.jwkSource();
 
-        JwtDecoder decoder=OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-        JwtEncoder encoder= new NimbusJwtEncoder(jwkSource);
-        Jwt jwt = encoder.encode(JwtEncoderParameters.from(JwtClaimsSet.builder().claim("aa","bb").build()));
+        JwtDecoder decoder = OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+        JwtEncoder encoder = new NimbusJwtEncoder(jwkSource);
+        Jwt jwt = encoder.encode(JwtEncoderParameters.from(JwtClaimsSet.builder().claim("aa", "bb").build()));
         System.out.println(jwt.getTokenValue());
-        Jwt decoderJwt =  decoder.decode("eyJraWQiOiI4ZWQ3OGFlOS05MGEwLTRjY2MtYTE4ZC0xMjExMDUxM2MwODUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJtZXNzYWdpbmctY2xpZW50IiwiYXVkIjoibWVzc2FnaW5nLWNsaWVudCIsIm5iZiI6MTY3NjM1OTM1OCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwiZXhwIjoxNzg3NDcwNDY5LCJpYXQiOjE2NzYzNTkzNTh9.juODO-DiTEF_5EFrIafres1-pWOr3IHxnbKO-G5E_8rDV0Et2dLf5b-iNs9MIo0B3eItbdItQ4-DieHYoIJffyFHQHKCGDoTMAyF2FFH32jUeaWFwEbJxTrYavy-ZxDK4noYK4Ui2-g6wDipXaA4H1OXEtd0CxtiXZeanUC4Mkd8TzFNexKgkMUCd9OGzv3_nZiVgG424-3Qqb-4HmgwLU1WMN_PBRegXvqXNf6VPvySnBAcMCKq3tSk6sdYR_3Sy3Iwxgk1IUnLFVDl7ZGFCZlYvfx4zUbLMS8ut-t7sd6unG-IdJkmlLkYN11Z02XKkvvwcVPR-lA8x8pKdnS-jg");
+        Jwt decoderJwt = decoder.decode("eyJraWQiOiI4ZWQ3OGFlOS05MGEwLTRjY2MtYTE4ZC0xMjExMDUxM2MwODUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJtZXNzYWdpbmctY2xpZW50IiwiYXVkIjoibWVzc2FnaW5nLWNsaWVudCIsIm5iZiI6MTY3NjM1OTM1OCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwiZXhwIjoxNzg3NDcwNDY5LCJpYXQiOjE2NzYzNTkzNTh9.juODO-DiTEF_5EFrIafres1-pWOr3IHxnbKO-G5E_8rDV0Et2dLf5b-iNs9MIo0B3eItbdItQ4-DieHYoIJffyFHQHKCGDoTMAyF2FFH32jUeaWFwEbJxTrYavy-ZxDK4noYK4Ui2-g6wDipXaA4H1OXEtd0CxtiXZeanUC4Mkd8TzFNexKgkMUCd9OGzv3_nZiVgG424-3Qqb-4HmgwLU1WMN_PBRegXvqXNf6VPvySnBAcMCKq3tSk6sdYR_3Sy3Iwxgk1IUnLFVDl7ZGFCZlYvfx4zUbLMS8ut-t7sd6unG-IdJkmlLkYN11Z02XKkvvwcVPR-lA8x8pKdnS-jg");
         System.out.println(decoderJwt);
     }
+
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().build();

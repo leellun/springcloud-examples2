@@ -1,10 +1,10 @@
-package com.newland.auth.config.password;
+package com.newland.auth.config.jwt;
 
+import com.newland.auth.common.GrantType;
 import com.newland.auth.utils.OAuth2EndpointUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -17,12 +17,12 @@ import java.util.*;
  * 密码认证转换器
  * @author leell
  */
-public final class OAuth2PasswordAuthenticationConverter implements AuthenticationConverter {
+public final class JwtAuthenticationConverter implements AuthenticationConverter {
 
     @Override
     public Authentication convert(HttpServletRequest request) {
         String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
-        if (!AuthorizationGrantType.PASSWORD.getValue().equals(grantType)) {
+        if (!GrantType.JWT.getValue().equals(grantType)) {
             return null;
         }
         MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
@@ -59,7 +59,7 @@ public final class OAuth2PasswordAuthenticationConverter implements Authenticati
             }
         });
 
-        return new OAuth2PasswordAuthenticationToken(clientPrincipal, requestedScopes, additionalParameters, username, password);
+        return new JwtAuthenticationToken(clientPrincipal, requestedScopes, additionalParameters, username, password);
     }
 
 }

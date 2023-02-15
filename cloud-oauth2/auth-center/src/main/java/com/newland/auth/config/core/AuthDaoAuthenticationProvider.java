@@ -16,7 +16,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.www.BasicAuthenticationConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -38,7 +37,6 @@ public class AuthDaoAuthenticationProvider extends AbstractUserDetailsAuthentica
      */
     private static final String USER_NOT_FOUND_PASSWORD = "userNotFoundPassword";
 
-    private final static BasicAuthenticationConverter basicConvert = new BasicAuthenticationConverter();
     @Autowired
     private PasswordEncoder passwordEncoder;
     /**

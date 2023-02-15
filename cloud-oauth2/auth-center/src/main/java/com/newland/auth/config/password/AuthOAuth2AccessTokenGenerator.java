@@ -1,6 +1,5 @@
-package com.newland.auth.config.core;
+package com.newland.auth.config.password;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClaimAccessor;
@@ -11,11 +10,11 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.token.*;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -33,11 +32,9 @@ import java.util.UUID;
  * @author leellun
  */
 public class AuthOAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OAuth2AccessToken> {
-    private JwtEncoder jwtEncoder;
     private OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 
-    public AuthOAuth2AccessTokenGenerator(JwtEncoder jwtEncoder) {
-        this.jwtEncoder = jwtEncoder;
+    public AuthOAuth2AccessTokenGenerator() {
     }
 
     @Nullable
@@ -94,61 +91,8 @@ public class AuthOAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OAut
 
         OAuth2TokenClaimsSet accessTokenClaimsSet = claimsBuilder.build();
         return new OAuth2AccessTokenClaims(OAuth2AccessToken.TokenType.BEARER,
-                "2q34234234234", accessTokenClaimsSet.getIssuedAt(), accessTokenClaimsSet.getExpiresAt(),
+                UUID.randomUUID().toString(), accessTokenClaimsSet.getIssuedAt(), accessTokenClaimsSet.getExpiresAt(),
                 context.getAuthorizedScopes(), accessTokenClaimsSet.getClaims());
-    }
-
-    private void init(OAuth2TokenContext context) {
-        String issuer = null;
-        if (context.getAuthorizationServerContext() != null) {
-            issuer = context.getAuthorizationServerContext().getIssuer();
-        }
-        Instant issuedAt = Instant.now();
-        Instant expiresAt;
-        RegisteredClient registeredClient = context.getRegisteredClient();
-        JwsAlgorithm jwsAlgorithm = SignatureAlgorithm.RS256;
-        if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
-            expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
-            if (registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm() != null) {
-                jwsAlgorithm = registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm();
-            }
-        } else {
-            expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
-        }
-
-        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder();
-        if (StringUtils.hasText(issuer)) {
-            claimsBuilder.issuer(issuer);
-        }
-        claimsBuilder
-                .subject(context.getPrincipal().getName())
-                .audience(Collections.singletonList(registeredClient.getClientId()))
-                .issuedAt(issuedAt)
-                .expiresAt(expiresAt);
-        if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-            claimsBuilder.notBefore(issuedAt);
-            if (!CollectionUtils.isEmpty(context.getAuthorizedScopes())) {
-                claimsBuilder.claim(OAuth2ParameterNames.SCOPE, context.getAuthorizedScopes());
-            }
-        } else if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
-            claimsBuilder.claim(IdTokenClaimNames.AZP, registeredClient.getClientId());
-            if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(context.getAuthorizationGrantType())) {
-                OAuth2AuthorizationRequest authorizationRequest = context.getAuthorization().getAttribute(
-                        OAuth2AuthorizationRequest.class.getName());
-                String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
-                if (StringUtils.hasText(nonce)) {
-                    claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
-                }
-            }
-        }
-
-        JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(jwsAlgorithm);
-
-        JwsHeader jwsHeader = jwsHeaderBuilder.build();
-        JwtClaimsSet claims = claimsBuilder.build();
-
-        Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
-
     }
 
     /**
